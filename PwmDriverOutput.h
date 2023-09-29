@@ -18,8 +18,6 @@ public:
     static void setPwm(float value)
     {
         uint16_t on = (uint16_t)(4096.0f * value);
-        // uint16_t off = (uint16_t)(4096.0f * (1.0f - value));
-
         PwmDriver::setPwm(channel, 0, on);
     }
 

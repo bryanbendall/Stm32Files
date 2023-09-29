@@ -65,8 +65,8 @@ void PwmDriver::sendCommand(Register reg, uint8_t data)
 
 uint8_t PwmDriver::read(Register reg)
 {
-    // if (HAL_I2C_Master_Transmit(&hi2c2, m_slaveAddress, (uint8_t*)&reg, 1, HAL_MAX_DELAY) != HAL_OK)
-    //     return 0;
+    if (HAL_I2C_Master_Transmit(&hi2c2, m_slaveAddress, (uint8_t*)&reg, 1, HAL_MAX_DELAY) != HAL_OK)
+        return 0;
 
     uint8_t buff;
     HAL_I2C_Master_Receive(&hi2c2, m_slaveAddress, &buff, 1, HAL_MAX_DELAY);
