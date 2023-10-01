@@ -10,7 +10,13 @@ void PwmDriver::init()
     reset();
     setPwmFrequency(300);
     setOutputMode(true);
-    setOePin(false); // OE pin low to enable outputs
+
+    // Make sure all channels are off
+    for (uint8_t i = 0; i < 16; i++)
+        setOff(i);
+
+    // TODO move this to test incoming power
+    setEnableOutput(true);
 }
 
 void PwmDriver::sleep()
@@ -30,6 +36,9 @@ void PwmDriver::wake()
 
 void PwmDriver::setPwm(uint8_t pinNum, uint16_t on, uint16_t off)
 {
+    if (pinNum > 15)
+        return;
+
     uint8_t buff[] = {
         (uint8_t)((uint8_t)Register::LED0_ON_L + 4 * pinNum),
         (uint8_t)on,
@@ -49,6 +58,12 @@ void PwmDriver::setOn(uint8_t pinNum)
 void PwmDriver::setOff(uint8_t pinNum)
 {
     setPwm(pinNum, 0, 4096);
+}
+
+void PwmDriver::setEnableOutput(bool state)
+{
+    // OE pin low to enable outputs
+    setOePin(!state);
 }
 
 void PwmDriver::sendCommand(Register reg, Data data)

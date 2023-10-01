@@ -50,6 +50,7 @@ public:
     static void setPwm(uint8_t pinNum, uint16_t on, uint16_t off);
     static void setOn(uint8_t pinNum);
     static void setOff(uint8_t pinNum);
+    static void setEnableOutput(bool state);
 
 private:
     PwmDriver() = default;
