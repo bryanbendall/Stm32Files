@@ -124,8 +124,11 @@ float L9966::readIoVoltage(uint16_t index, VoltageRange range)
     writeRegister(Register::SC_CONF, scConfData);
 
     uint16_t scResult = 0;
+    uint32_t tickstart = HAL_GetTick();
     while ((scResult & (1 << 14)) == 0) {
         scResult = readRegister(Register::SC_RESULT);
+        if (((HAL_GetTick() - tickstart) >= 2))
+            break;
     }
 
     float result = (float)(scResult & 0xFFF) / 4095.0f;
@@ -158,8 +161,11 @@ float L9966::readIoResistance(uint16_t index, ResistanceRange range)
     writeRegister(Register::SC_CONF, scConfData);
 
     uint16_t scResult = 0;
+    uint32_t tickstart = HAL_GetTick();
     while ((scResult & 0x7FFF) == 0) {
         scResult = readRegister(Register::SC_RESULT);
+        if (((HAL_GetTick() - tickstart) >= 2))
+            break;
     }
 
     uint16_t resistance = 0;
