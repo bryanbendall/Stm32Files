@@ -1,5 +1,6 @@
 #include "L9966.h"
 
+#include "UsDelay.h"
 #include "gpio.h"
 #include "spi.h"
 #include <stdio.h>
@@ -74,60 +75,10 @@ enum Register : uint32_t {
     SQNCR_RESULT_15 = 0b1110'1111
 };
 
-float L9966::readVolts(uint8_t channel)
-{
-    // Single conversion
-    uint16_t scConfData = 0;
-    scConfData |= (1 << 0); // Voltage select
-    scConfData |= (channel << 3); // Select UBSW
-    scConfData |= (1 << 8); // ADC_RUN
-    writeRegister(Register::SC_CONF, scConfData);
-
-    // if UBSW full range will be 1.25V
-
-    HAL_Delay(100);
-
-    uint16_t raw = readRegister(Register::SC_RESULT);
-    raw = raw & 0xFFF;
-    return (float)raw / 4095.0f * 1.25;
-}
-
-void L9966::readTest()
-{
-    // HAL_Delay(500);
-    // setResetPin(true);
-    // HAL_Delay(500);
-
-    // uint16_t genReg = readRegister(Register::GEN_STATUS);
-    HAL_Delay(10);
-    uint16_t version = readRegister(Register::DEV_V);
-    HAL_Delay(10);
-    uint16_t id = readRegister(Register::DEV_ID);
-    HAL_Delay(10);
-
-    // Adc timing
-    uint16_t timing = 0;
-    timing |= (0b111 << 12);
-    writeRegister(Register::ADC_TIMING, timing);
-
-    float ubsw = readVolts(0b01101) * 33.0f;
-    float vix = readVolts(0b01111) * 21.0f;
-    float vi5v = readVolts(0b01110) * 4.1f;
-    float debug = readVolts(0b00000); // should be 0.99v?
-
-    float measure = readIoVoltage(1);
-    measure = readIoVoltage(2);
-    measure = readIoVoltage(3);
-    measure = readIoVoltage(4);
-    measure = readIoVoltage(5);
-
-    int i = 0;
-}
-
 void L9966::init()
 {
     setResetPin(true);
-    HAL_Delay(100);
+    HAL_Delay(10);
     uint16_t genReg = readRegister(Register::GEN_STATUS);
     if (genReg & 0b0110)
         printf("L9966 Init Failed\n");
@@ -137,10 +88,29 @@ void L9966::init()
     uint16_t cal = 0;
     cal |= (1 << 6);
     writeRegister(Register::GEN_STATUS, cal);
-    HAL_Delay(100);
+    HAL_Delay(10);
+
+    uint16_t timingData = 0;
+    timingData |= (10 << 12); // Adc1 - 80us
+    timingData |= (1 << 0); // RR1 - 200us
+    timingData |= (2 << 4); // RR2 - 400us
+    timingData |= (9 << 8); // RR3 - 1.8ms
+    writeRegister(Register::ADC_TIMING, timingData);
 }
 
-float L9966::readIoVoltage(uint16_t index)
+void L9966::setIoPull(uint16_t index, IoPull pull, PullCurrent current)
+{
+    if (index > 15)
+        return;
+
+    uint16_t reg = 0;
+    reg |= ((uint8_t)pull << 1);
+    reg |= ((uint8_t)current << 6);
+
+    writeRegister(Register::CURR_SRC_CTRL_1 + (index - 1), reg);
+}
+
+float L9966::readIoVoltage(uint16_t index, VoltageRange range)
 {
     if (index == 0 || index > 12)
         return 0.0f;
@@ -148,8 +118,7 @@ float L9966::readIoVoltage(uint16_t index)
     // Single conversion
     uint16_t scConfData = 0;
     scConfData |= (1 << 0); // Voltage select
-    // scConfData |= (0b01 << 1); // 20v range
-    scConfData |= (0b10 << 1); // 40v range
+    scConfData |= (((uint8_t)range & 0x3) << 1); // Range
     scConfData |= (index << 3); // Select io
     scConfData |= (1 << 8); // ADC_RUN
     writeRegister(Register::SC_CONF, scConfData);
@@ -159,8 +128,65 @@ float L9966::readIoVoltage(uint16_t index)
         scResult = readRegister(Register::SC_RESULT);
     }
 
-    // return (float)((scResult & 0xFFF) - 30) / 4095.0f * 13.5f; // 20v range
-    return (float)((scResult & 0xFFF)) / 4095.0f * 27.5f; // 40v range
+    float result = (float)(scResult & 0xFFF) / 4095.0f;
+
+    switch (range) {
+    case VoltageRange::FiveVolt:
+        return result * 5.0f;
+    case VoltageRange::TwentyVolt:
+        return result * 20.0f;
+    case VoltageRange::FortyVolt:
+        return result * 40.0f;
+    case VoltageRange::OneAndQuarterVolt:
+        return result * 1.25f;
+
+    default:
+        return 0.0f;
+    }
+}
+
+float L9966::readIoResistance(uint16_t index, ResistanceRange range)
+{
+    if (index == 0 || index > 12)
+        return 0.0f;
+
+    // Single conversion
+    uint16_t scConfData = 0;
+    scConfData |= (((uint8_t)range & 0x3) << 1); // Range
+    scConfData |= (index << 3); // Select io
+    scConfData |= (1 << 8); // ADC_RUN
+    writeRegister(Register::SC_CONF, scConfData);
+
+    uint16_t scResult = 0;
+    while ((scResult & 0x7FFF) == 0) {
+        scResult = readRegister(Register::SC_RESULT);
+    }
+
+    uint16_t resistance = 0;
+    switch (range) {
+    case ResistanceRange::NoPullup:
+        resistance = 0;
+        break;
+    case ResistanceRange::RR1:
+        resistance = 180;
+        break;
+    case ResistanceRange::RR2:
+        resistance = 9'100;
+        break;
+    case ResistanceRange::RR3:
+        resistance = 50'000;
+        break;
+    default:
+        break;
+    }
+
+    return (float)(scResult & 0x7FFF) / 2048.0f * (float)resistance;
+}
+
+bool L9966::readIoDigital(uint16_t index)
+{
+    uint16_t reg = readRegister(Register::DIG_IN_STAT);
+    return reg & (1 << (index - 1));
 }
 
 void L9966::setSlavePin(bool state)
@@ -190,11 +216,8 @@ bool getPairty(uint32_t n)
 
 void checkFixedPattern(uint16_t data)
 {
-    if ((data & 0x3E00) == 0x2A00) {
-        printf("Fixed pattern ok\n");
-    } else {
-        printf("Fixed pattern BAD\n");
-    }
+    // if ((data & 0x3E00) != 0x2A00)
+    // printf("Fixed pattern BAD\n");
 }
 
 uint16_t L9966::readRegister(uint16_t reg)
@@ -215,12 +238,12 @@ uint16_t L9966::readRegister(uint16_t reg)
         sendData[1] |= (1 << 15);
 
     setSlavePin(false);
-    HAL_Delay(1);
+    DWT_Delay_us(100);
 
     uint16_t readData[2] = {};
     HAL_SPI_TransmitReceive(&hspi1, (uint8_t*)sendData, (uint8_t*)readData, 2, HAL_MAX_DELAY);
 
-    HAL_Delay(1);
+    DWT_Delay_us(100);
     setSlavePin(true);
 
     checkFixedPattern(readData[0]);
@@ -247,20 +270,15 @@ void L9966::writeRegister(uint16_t reg, uint16_t data)
         sendData[1] |= (1 << 15);
 
     setSlavePin(false);
-    HAL_Delay(1);
+    DWT_Delay_us(100);
 
     uint16_t readData[2] = {};
     HAL_SPI_TransmitReceive(&hspi1, (uint8_t*)sendData, (uint8_t*)readData, 2, HAL_MAX_DELAY);
 
     checkFixedPattern(readData[0]);
 
-    HAL_Delay(1);
+    DWT_Delay_us(100);
     setSlavePin(true);
-
-    uint16_t read = readRegister(reg);
-    if (read != sendData[1]) {
-        printf("read does not match write\n");
-    }
 }
 
 void L9966::softwareReset()
