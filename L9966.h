@@ -20,6 +20,7 @@ public:
     };
 
     enum class IoPull : uint8_t {
+        None = 0b000,
         TwelveVolt = 0b001,
         FiveVolt = 0b010, // IO 13-15 redirected to 12v
         VVAR = 0b011,
@@ -40,9 +41,11 @@ public:
     };
 
     static void init();
+    static void softwareReset();
     static void setIoPull(uint16_t index, IoPull pull, PullCurrent current);
     static float readIoVoltage(uint16_t index, VoltageRange range);
     static float readIoResistance(uint16_t index, ResistanceRange range);
+    static float readIoResistanceAutorange(uint16_t index);
     static bool readIoDigital(uint16_t index);
 
 private:
@@ -51,5 +54,4 @@ private:
     static void setResetPin(bool state);
     static uint16_t readRegister(uint16_t reg);
     static void writeRegister(uint16_t reg, uint16_t data);
-    static void softwareReset();
 };

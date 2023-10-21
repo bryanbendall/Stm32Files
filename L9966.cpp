@@ -96,6 +96,18 @@ void L9966::init()
     timingData |= (2 << 4); // RR2 - 400us
     timingData |= (9 << 8); // RR3 - 1.8ms
     writeRegister(Register::ADC_TIMING, timingData);
+
+    // To set Comparator threshold to Uth2
+    setIoPull(13, IoPull::None, PullCurrent::uA600);
+    setIoPull(14, IoPull::None, PullCurrent::uA600);
+    setIoPull(15, IoPull::None, PullCurrent::uA600);
+}
+
+void L9966::softwareReset()
+{
+    writeRegister(Register::SOFT_RST_CMD, 0b1001);
+    writeRegister(Register::SOFT_RST_CMD, 0b0110);
+    writeRegister(Register::SOFT_RST_CMD, 0b0011);
 }
 
 void L9966::setIoPull(uint16_t index, IoPull pull, PullCurrent current)
@@ -106,14 +118,20 @@ void L9966::setIoPull(uint16_t index, IoPull pull, PullCurrent current)
     uint16_t reg = 0;
     reg |= ((uint8_t)pull << 1);
     reg |= ((uint8_t)current << 6);
+    reg |= (0b01 << 9); // Comparator threshold - Uth2
+    reg |= (1 << 0); // Invert mode
 
     writeRegister(Register::CURR_SRC_CTRL_1 + (index - 1), reg);
 }
 
 float L9966::readIoVoltage(uint16_t index, VoltageRange range)
 {
-    if (index == 0 || index > 12)
+    if (index == 0 || index > 15)
         return 0.0f;
+
+    // Special case for io 13-15
+    if (index > 12)
+        index += 3;
 
     // Single conversion
     uint16_t scConfData = 0;
@@ -187,6 +205,17 @@ float L9966::readIoResistance(uint16_t index, ResistanceRange range)
     }
 
     return (float)(scResult & 0x7FFF) / 2048.0f * (float)resistance;
+}
+
+float L9966::readIoResistanceAutorange(uint16_t index)
+{
+    float reading = readIoResistance(index, ResistanceRange::RR1);
+    if (reading > 2000.0f)
+        reading = readIoResistance(index, ResistanceRange::RR2);
+    if (reading > 30000.0f)
+        reading = readIoResistance(index, ResistanceRange::RR3);
+
+    return reading;
 }
 
 bool L9966::readIoDigital(uint16_t index)
@@ -285,11 +314,4 @@ void L9966::writeRegister(uint16_t reg, uint16_t data)
 
     DWT_Delay_us(100);
     setSlavePin(true);
-}
-
-void L9966::softwareReset()
-{
-    writeRegister(Register::SOFT_RST_CMD, 0b1001);
-    writeRegister(Register::SOFT_RST_CMD, 0b0110);
-    writeRegister(Register::SOFT_RST_CMD, 0b0011);
 }
