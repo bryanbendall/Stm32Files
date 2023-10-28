@@ -14,9 +14,6 @@ void PwmDriver::init()
     // Make sure all channels are off
     for (uint8_t i = 0; i < 16; i++)
         setOff(i);
-
-    // TODO move this to test incoming power
-    setEnableOutput(true);
 }
 
 void PwmDriver::sleep()

@@ -76,8 +76,11 @@ void Usb::update()
                     i += (2 + packet.length);
                     // Valid packet, do something with it
                     Brytec::CanExtFrame frame = packet.as<Brytec::CanExtFrame>();
-                    Brytec::EBrytecApp::brytecCanReceived(frame);
-                    CanBus::send(frame);
+                    if (frame) {
+                        Brytec::EBrytecApp::brytecCanReceived(frame);
+                        CanBus::send(frame);
+                    }
+
                 } else {
                     i++;
                 }
