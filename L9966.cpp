@@ -210,10 +210,15 @@ float L9966::readIoResistance(uint16_t index, ResistanceRange range)
 float L9966::readIoResistanceAutorange(uint16_t index)
 {
     float reading = readIoResistance(index, ResistanceRange::RR1);
-    if (reading > 2000.0f)
+    reading = readIoResistance(index, ResistanceRange::RR1);
+    if (reading > 2000.0f) {
         reading = readIoResistance(index, ResistanceRange::RR2);
-    if (reading > 30000.0f)
+        reading = readIoResistance(index, ResistanceRange::RR2);
+    }
+    if (reading > 30000.0f) {
         reading = readIoResistance(index, ResistanceRange::RR3);
+        reading = readIoResistance(index, ResistanceRange::RR3);
+    }
 
     return reading;
 }
