@@ -1,7 +1,6 @@
 #include "CanBus.h"
 
 #include "EBrytecApp.h"
-#include "Usb.h"
 #include "fdcan.h"
 #include "stm32g4xx_hal_fdcan.h"
 
@@ -14,9 +13,7 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef* hfdcan, uint32_t RxFifo0ITs)
     HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &header, frame.data);
     frame.id = header.Identifier;
 
-    // CanBus::send(frame);
     Brytec::EBrytecApp::brytecCanReceived(frame);
-    Usb::send(frame);
 }
 
 void CanBus::start()
@@ -25,7 +22,7 @@ void CanBus::start()
     HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
 }
 
-void CanBus::send(Brytec::CanExtFrame& frame)
+void CanBus::send(const Brytec::CanExtFrame& frame)
 {
     FDCAN_TxHeaderTypeDef header = {};
     header.Identifier = frame.id;
@@ -38,5 +35,5 @@ void CanBus::send(Brytec::CanExtFrame& frame)
     header.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
     header.MessageMarker = 0;
 
-    HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &header, frame.data);
+    HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &header, (uint8_t*)frame.data);
 }

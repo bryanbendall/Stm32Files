@@ -6,5 +6,5 @@ class CanBus {
 
 public:
     static void start();
-    static void send(Brytec::CanExtFrame& frame);
+    static void send(const Brytec::CanExtFrame& frame);
 };

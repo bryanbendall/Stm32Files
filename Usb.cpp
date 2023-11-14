@@ -27,13 +27,6 @@ extern "C" int _write(int file, char* ptr, int len)
     return len;
 }
 
-void Usb::send(Brytec::CanExtFrame& frame)
-{
-    Brytec::UsbPacket packet;
-    packet.set<Brytec::CanExtFrame>(frame);
-    s_sendBuffer.add(packet);
-}
-
 void Usb::send(Brytec::UsbPacket& packet)
 {
     s_sendBuffer.add(packet);
@@ -75,11 +68,7 @@ void Usb::update()
                     memcpy(packet.data, &rxBuffer[i + 2], packet.length);
                     i += (2 + packet.length);
                     // Valid packet, do something with it
-                    Brytec::CanExtFrame frame = packet.as<Brytec::CanExtFrame>();
-                    if (frame) {
-                        Brytec::EBrytecApp::brytecCanReceived(frame);
-                        CanBus::send(frame);
-                    }
+                    Brytec::EBrytecApp::brytecUsbReceived(packet);
 
                 } else {
                     i++;
