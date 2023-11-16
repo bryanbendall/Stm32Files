@@ -17,6 +17,12 @@ public:
 
     static void setPwm(float value)
     {
+        // Clamp value
+        if (value < 0.0f)
+            value = 0.0f;
+        if (value > 1.0f)
+            value = 1.0f;
+
         uint16_t on = (uint16_t)(4096.0f * value);
         PwmDriver::setPwm(channel, 0, on);
     }
