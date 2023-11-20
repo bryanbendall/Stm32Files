@@ -13,7 +13,7 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef* hfdcan, uint32_t RxFifo0ITs)
     HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &header, frame.data);
     frame.id = header.Identifier;
 
-    Brytec::EBrytecApp::brytecCanReceived(frame);
+    Brytec::EBrytecApp::canReceived(0, frame);
 }
 
 void CanBus::start()
