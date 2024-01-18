@@ -101,7 +101,7 @@ void CanBus::send(uint8_t index, const Brytec::CanFrame& frame)
     else
         header.IdType = FDCAN_STANDARD_ID;
     header.TxFrameType = FDCAN_FRAME_CLASSIC;
-    header.DataLength = FDCAN_DLC_BYTES_8;
+    header.DataLength = (uint32_t)frame.dlc << 16;
     header.ErrorStateIndicator = FDCAN_ESI_PASSIVE;
     header.BitRateSwitch = FDCAN_BRS_OFF;
     header.FDFormat = FDCAN_FRAME_CLASSIC;
