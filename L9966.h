@@ -1,6 +1,7 @@
 #pragma once
 
 #include "stdint.h"
+#include "spi.h"
 
 class L9966 {
 
@@ -40,7 +41,7 @@ public:
         mA20 = 0b111
     };
 
-    static void init();
+    static void init(SPI_HandleTypeDef* spi);
     static void softwareReset();
     static void setIoPull(uint16_t index, IoPull pull, PullCurrent current);
     static float readIoVoltage(uint16_t index, VoltageRange range);
@@ -54,4 +55,7 @@ private:
     static void setResetPin(bool state);
     static uint16_t readRegister(uint16_t reg);
     static void writeRegister(uint16_t reg, uint16_t data);
+
+private:
+    static SPI_HandleTypeDef* s_spi;
 };

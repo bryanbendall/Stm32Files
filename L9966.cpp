@@ -2,7 +2,6 @@
 
 #include "UsDelay.h"
 #include "gpio.h"
-#include "spi.h"
 #include <stdio.h>
 
 enum Register : uint32_t {
@@ -75,8 +74,16 @@ enum Register : uint32_t {
     SQNCR_RESULT_15 = 0b1110'1111
 };
 
-void L9966::init()
+SPI_HandleTypeDef* L9966::s_spi = nullptr;
+
+void L9966::init(SPI_HandleTypeDef* spi)
 {
+    s_spi = spi;
+    if (!s_spi) {
+        printf("L9966 spi not set");
+        return;
+    }
+
     setResetPin(true);
     HAL_Delay(10);
     uint16_t genReg = readRegister(Register::GEN_STATUS);
@@ -231,17 +238,17 @@ bool L9966::readIoDigital(uint16_t index)
 
 void L9966::setSlavePin(bool state)
 {
-    HAL_GPIO_WritePin(SPI1_SS_L9966_GPIO_Port, SPI1_SS_L9966_Pin, (GPIO_PinState)state);
+    HAL_GPIO_WritePin(SPI_SS_L9966_GPIO_Port, SPI_SS_L9966_Pin, (GPIO_PinState)state);
 }
 
 void L9966::setSyncPin(bool state)
 {
-    HAL_GPIO_WritePin(L6699_Sync_GPIO_Port, L6699_Sync_Pin, (GPIO_PinState)state);
+    HAL_GPIO_WritePin(L9966_Sync_GPIO_Port, L9966_Sync_Pin, (GPIO_PinState)state);
 }
 
 void L9966::setResetPin(bool state)
 {
-    HAL_GPIO_WritePin(L6699_Rst_GPIO_Port, L6699_Rst_Pin, (GPIO_PinState)state);
+    HAL_GPIO_WritePin(L9966_Rst_GPIO_Port, L9966_Rst_Pin, (GPIO_PinState)state);
 }
 
 bool getPairty(uint32_t n)
@@ -262,6 +269,11 @@ void checkFixedPattern(uint16_t data)
 
 uint16_t L9966::readRegister(uint16_t reg)
 {
+    if (!s_spi) {
+        printf("L9966 spi not set");
+        return 0;
+    }
+
     uint16_t sendData[2] = {};
     sendData[0] |= (1 << 15);
     sendData[0] |= (1 << 14); // CTRL_CFG
@@ -281,7 +293,7 @@ uint16_t L9966::readRegister(uint16_t reg)
     DWT_Delay_us(100);
 
     uint16_t readData[2] = {};
-    HAL_SPI_TransmitReceive(&hspi1, (uint8_t*)sendData, (uint8_t*)readData, 2, HAL_MAX_DELAY);
+    HAL_SPI_TransmitReceive(s_spi, (uint8_t*)sendData, (uint8_t*)readData, 2, HAL_MAX_DELAY);
 
     DWT_Delay_us(100);
     setSlavePin(true);
@@ -293,6 +305,11 @@ uint16_t L9966::readRegister(uint16_t reg)
 
 void L9966::writeRegister(uint16_t reg, uint16_t data)
 {
+    if (!s_spi) {
+        printf("L9966 spi not set");
+        return;
+    }
+
     uint16_t sendData[2] = {};
     sendData[0] |= (1 << 15);
     sendData[0] |= (1 << 14); // CTRL_CFG
@@ -313,7 +330,7 @@ void L9966::writeRegister(uint16_t reg, uint16_t data)
     DWT_Delay_us(100);
 
     uint16_t readData[2] = {};
-    HAL_SPI_TransmitReceive(&hspi1, (uint8_t*)sendData, (uint8_t*)readData, 2, HAL_MAX_DELAY);
+    HAL_SPI_TransmitReceive(s_spi, (uint8_t*)sendData, (uint8_t*)readData, 2, HAL_MAX_DELAY);
 
     checkFixedPattern(readData[0]);
 
