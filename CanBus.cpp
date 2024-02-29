@@ -17,7 +17,7 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef* hfdcan, uint32_t RxFifo0ITs)
         frame.type = Brytec::CanFrameType::Ext;
     else
         frame.type = Brytec::CanFrameType::Std;
-    frame.dlc = header.DataLength;
+    frame.dlc = header.DataLength >> 16;
 
     uint8_t index = CanBusDefs::getCanBusIndex(hfdcan);
     if (index != UINT8_MAX)
