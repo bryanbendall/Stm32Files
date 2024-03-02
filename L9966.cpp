@@ -4,7 +4,7 @@
 #include "gpio.h"
 #include <stdio.h>
 
-enum Register : uint32_t {
+enum Register : uint8_t {
     GEN_STATUS = 0b0000'0001,
     DEV_V = 0b0000'0010,
     HW_REV = 0b0000'0011,
