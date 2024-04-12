@@ -7,10 +7,10 @@ class MsTimeout {
 public:
     MsTimeout(uint32_t timeoutMs);
     bool isTimeout();
-    float getTimestep();
+    uint32_t getTimestepMs();
 
 private:
     uint32_t m_timeout = 0;
     uint32_t m_lastMs = 0;
-    float m_timestep = 0.0f;
+    uint32_t m_timestepMs = 0;
 };

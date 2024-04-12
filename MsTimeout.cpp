@@ -11,7 +11,7 @@ bool MsTimeout::isTimeout()
 {
     uint32_t difference = HAL_GetTick() - m_lastMs;
     if (difference >= m_timeout) {
-        m_timestep = ((float)difference * 0.001f);
+        m_timestepMs = difference;
         m_lastMs = HAL_GetTick();
         return true;
     }
@@ -19,7 +19,7 @@ bool MsTimeout::isTimeout()
     return false;
 }
 
-float MsTimeout::getTimestep()
+uint32_t MsTimeout::getTimestepMs()
 {
-    return m_timestep;
+    return m_timestepMs;
 }
