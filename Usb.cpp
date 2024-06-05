@@ -4,10 +4,10 @@
 #include "CanBus.h"
 #include "Deserializer/BinaryArrayDeserializer.h"
 #include "EBrytecApp.h"
-#include "UsbBuffer.h"
 #include "usbd_cdc_if.h"
+#include "Utils/RingBuffer.h"
 
-static Brytec::UsbBuffer s_sendBuffer;
+static Brytec::RingBuffer<Brytec::UsbPacket, USB_BUFFER_SIZE> s_sendBuffer;
 
 extern "C" int _write(int file, char* ptr, int len)
 {

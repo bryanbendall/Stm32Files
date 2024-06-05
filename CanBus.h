@@ -2,6 +2,12 @@
 
 #include "Can/EBrytecCan.h"
 #include "ECanBus.h"
+#include "fdcan.h"
+
+struct CanBusMsgAndIndex {
+    uint8_t index;
+    Brytec::CanFrame frame;
+};
 
 class CanBus {
 
