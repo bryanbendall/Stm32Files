@@ -93,10 +93,8 @@ void CanBus::send(uint8_t index, const Brytec::CanFrame& frame)
     header.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
     header.MessageMarker = 0;
 
-    if (HAL_FDCAN_AddMessageToTxFifoQ(canHandle, &header, (uint8_t*)frame.data) != HAL_OK) {
-        printf("Adding frame to buffer\n");
+    if (HAL_FDCAN_AddMessageToTxFifoQ(canHandle, &header, (uint8_t*)frame.data) != HAL_OK)
         m_buffer.add({ index, frame });
-    }
 }
 
 void dispatchMessage(FDCAN_HandleTypeDef* hfdcan, uint32_t rxFifo)
@@ -125,7 +123,6 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef* hfdcan, uint32_t RxFifo0ITs)
 
 void HAL_FDCAN_RxFifo1Callback(FDCAN_HandleTypeDef* hfdcan, uint32_t RxFifo0ITs)
 {
-    printf("can in fifo1\n");
     dispatchMessage(hfdcan, FDCAN_RX_FIFO1);
 }
 
