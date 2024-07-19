@@ -1,11 +1,13 @@
 #include "Usb.h"
 
 #include "BinaryBufferSerializer.h"
+#include "BootloaderTools.h"
 #include "CanBus.h"
 #include "Deserializer/BinaryArrayDeserializer.h"
 #include "EBrytecApp.h"
-#include "usbd_cdc_if.h"
+#include "Usb/ModuleCommand.h"
 #include "Utils/RingBuffer.h"
+#include "usbd_cdc_if.h"
 
 static Brytec::RingBuffer<Brytec::UsbPacket, USB_BUFFER_SIZE> s_sendBuffer;
 
@@ -68,7 +70,29 @@ void Usb::update()
                     memcpy(packet.data, &rxBuffer[i + 2], packet.length);
                     i += (2 + packet.length);
                     // Valid packet, do something with it
-                    Brytec::EBrytecApp::brytecUsbReceived(packet);
+
+                    switch (packet.getType()) {
+                    case Brytec::UsbPacketType::Command: {
+                        Brytec::ModuleCommand moduleCommand = packet.as<Brytec::ModuleCommand>();
+                        if (moduleCommand) {
+                            switch (moduleCommand.command) {
+                            case Brytec::ModuleCommand::Command::GoToBootloader:
+                                setShouldGoToBootloader();
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                    case Brytec::UsbPacketType::Can:
+                        Brytec::EBrytecApp::brytecUsbReceived(packet);
+                        break;
+                    case Brytec::UsbPacketType::Status:
+                        break;
+                    case Brytec::UsbPacketType::Unknown:
+                        break;
+                    case Brytec::UsbPacketType::DebugPrint:
+                        break;
+                    }
 
                 } else {
                     i++;
