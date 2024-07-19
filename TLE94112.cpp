@@ -126,7 +126,7 @@ uint8_t TLE94112::readRegister(uint8_t reg)
 
     DWT_Delay_us(100);
     setSlavePin(true);
-    HAL_Delay(2);
+    // HAL_Delay(2);
 
     return readData[1];
 }
@@ -145,7 +145,7 @@ void TLE94112::writeRegister(uint8_t reg, uint8_t data)
 
     DWT_Delay_us(100);
     setSlavePin(true);
-    HAL_Delay(2);
+    // HAL_Delay(2);
 }
 
 void TLE94112::printStatus()
