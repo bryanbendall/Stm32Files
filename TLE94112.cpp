@@ -40,37 +40,59 @@ void TLE94112::init()
     DWT_Delay_us(250);
 }
 
-void TLE94112::setOutput(uint8_t index, OutputDrive type)
+void TLE94112::setOutput(uint8_t index, OutputDrive type, bool immediate)
 {
+
     if (index < 1 || index > 12)
         return;
 
     uint8_t regAddr = 0;
     uint8_t shift = ((index - 1) * 2) % 8;
 
-    if (index > 8) // 9 - 12
-        regAddr = HB_ACT_3_CTRL;
-    else if (index > 4) // 5 - 8
-        regAddr = HB_ACT_2_CTRL;
-    else // 1 - 4
-        regAddr = HB_ACT_1_CTRL;
+    uint8_t reg;
 
-    uint8_t reg = readRegister(regAddr);
+    if (index > 8) {
+        // 9 - 12
+        regAddr = HB_ACT_3_CTRL;
+        reg = s_HB_ACT_3_CTRL;
+    } else if (index > 4) {
+        // 5 - 8
+        regAddr = HB_ACT_2_CTRL;
+        reg = s_HB_ACT_2_CTRL;
+
+    } else {
+        // 1 - 4
+        regAddr = HB_ACT_1_CTRL;
+        reg = s_HB_ACT_1_CTRL;
+    }
+
     reg &= !((1 << (shift + OutputDrive::LowSide)) | (1 << (shift + OutputDrive::HighSide))); // clear bits
 
-    if (type == OutputDrive::Off)
-        resetOverCurrentFlag(index);
-    else
+    if (type != OutputDrive::Off)
         reg |= (1 << (shift + type));
 
-    writeRegister(regAddr, reg);
+    if (immediate) {
+        if (type == OutputDrive::Off)
+            resetOverCurrentFlag(index);
+
+        writeRegister(regAddr, reg);
+    }
+}
+
+void TLE94112::setAllOutputs()
+{
+    writeRegister(HB_ACT_1_CTRL, s_HB_ACT_1_CTRL);
+    writeRegister(HB_ACT_2_CTRL, s_HB_ACT_2_CTRL);
+    writeRegister(HB_ACT_3_CTRL, s_HB_ACT_3_CTRL);
 }
 
 void TLE94112::setAllOff()
 {
-    writeRegister(HB_ACT_1_CTRL, 0);
-    writeRegister(HB_ACT_2_CTRL, 0);
-    writeRegister(HB_ACT_3_CTRL, 0);
+    s_HB_ACT_1_CTRL = 0;
+    s_HB_ACT_2_CTRL = 0;
+    s_HB_ACT_3_CTRL = 0;
+
+    setAllOutputs();
 }
 
 bool TLE94112::isOverCurrent(uint8_t index, bool reset)
@@ -126,7 +148,6 @@ uint8_t TLE94112::readRegister(uint8_t reg)
 
     DWT_Delay_us(100);
     setSlavePin(true);
-    // HAL_Delay(2);
 
     return readData[1];
 }
@@ -145,7 +166,6 @@ void TLE94112::writeRegister(uint8_t reg, uint8_t data)
 
     DWT_Delay_us(100);
     setSlavePin(true);
-    // HAL_Delay(2);
 }
 
 void TLE94112::printStatus()
