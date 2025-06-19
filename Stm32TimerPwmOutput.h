@@ -33,7 +33,7 @@ public:
         else
             ccr = ((float)timer->ARR * percent);
 
-        timer->CCR1 = ccr;
+        setCCR(ccr);
     }
 
     Stm32TimerPwmOutput() = delete;
@@ -80,5 +80,28 @@ private:
         if constexpr (timerBase == TIM8_BASE)
             return &htim8;
 #endif
+    }
+
+    static void setCCR(uint32_t value)
+    {
+        TIM_TypeDef* timer = ((TIM_TypeDef*)timerBase);
+
+        if constexpr (channel == TIM_CHANNEL_1)
+            timer->CCR1 = value;
+
+        if constexpr (channel == TIM_CHANNEL_2)
+            timer->CCR2 = value;
+
+        if constexpr (channel == TIM_CHANNEL_3)
+            timer->CCR3 = value;
+
+        if constexpr (channel == TIM_CHANNEL_4)
+            timer->CCR4 = value;
+
+        if constexpr (channel == TIM_CHANNEL_5)
+            timer->CCR5 = value;
+
+        if constexpr (channel == TIM_CHANNEL_6)
+            timer->CCR6 = value;
     }
 };
