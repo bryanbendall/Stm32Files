@@ -79,14 +79,20 @@ void CanBus::send(uint8_t index, const Brytec::CanFrame& frame)
     if (!canHandle)
         return;
 
-    FDCAN_TxHeaderTypeDef header = {};
+    FDCAN_TxHeaderTypeDef header = { };
     header.Identifier = frame.id;
     if (frame.type == Brytec::CanFrameType::Ext)
         header.IdType = FDCAN_EXTENDED_ID;
     else
         header.IdType = FDCAN_STANDARD_ID;
-    header.TxFrameType = FDCAN_FRAME_CLASSIC;
-    header.DataLength = (uint32_t)frame.dlc << 16;
+    header.TxFrameType = FDCAN_DATA_FRAME;
+
+    // Change in stm32 hal versions
+    if (FDCAN_DLC_BYTES_0 == 0)
+        header.DataLength = (uint32_t)frame.dlc;
+    else
+        header.DataLength = (uint32_t)frame.dlc << 16;
+
     header.ErrorStateIndicator = FDCAN_ESI_PASSIVE;
     header.BitRateSwitch = FDCAN_BRS_OFF;
     header.FDFormat = FDCAN_FRAME_CLASSIC;
@@ -101,7 +107,7 @@ void dispatchMessage(FDCAN_HandleTypeDef* hfdcan, uint32_t rxFifo)
 {
     Brytec::CanFrame frame;
 
-    FDCAN_RxHeaderTypeDef header = {};
+    FDCAN_RxHeaderTypeDef header = { };
     /* Retrieve Rx messages from RX FIFO0 */
     HAL_FDCAN_GetRxMessage(hfdcan, rxFifo, &header, frame.data);
     frame.id = header.Identifier;
