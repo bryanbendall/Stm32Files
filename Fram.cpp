@@ -27,7 +27,7 @@ void Fram::init(SPI_HandleTypeDef* spi)
 bool Fram::read(uint16_t address, uint8_t* destination, uint16_t size)
 {
     if (!s_spi) {
-        printf("L9966 spi not set");
+        printf("Fram spi not set");
         return false;
     }
 
@@ -54,7 +54,7 @@ bool Fram::read(uint16_t address, uint8_t* destination, uint16_t size)
 bool Fram::write(uint16_t address, uint8_t* source, uint16_t size)
 {
     if (!s_spi) {
-        printf("L9966 spi not set");
+        printf("Fram spi not set");
         return false;
     }
 
@@ -100,7 +100,7 @@ void Fram::setHoldPin(bool state)
 void Fram::setWriteEnableLatch()
 {
     if (!s_spi) {
-        printf("L9966 spi not set");
+        printf("Fram spi not set");
         return;
     }
 
@@ -116,7 +116,7 @@ void Fram::setWriteEnableLatch()
 void Fram::resetWriteEnableLatch()
 {
     if (!s_spi) {
-        printf("L9966 spi not set");
+        printf("Fram spi not set");
         return;
     }
 
@@ -132,7 +132,7 @@ void Fram::resetWriteEnableLatch()
 void Fram::transferAddress(uint16_t address)
 {
     if (!s_spi) {
-        printf("L9966 spi not set");
+        printf("Fram spi not set");
         return;
     }
 

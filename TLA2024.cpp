@@ -6,6 +6,7 @@
 void TLA2024::init()
 {
     printConfig();
+    setRange(TLA2024::Range::FSR_6_144V);
 }
 
 void TLA2024::setInput(Input input)

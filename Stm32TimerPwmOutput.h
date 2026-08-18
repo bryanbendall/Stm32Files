@@ -32,7 +32,26 @@ public:
         else
             ccr = ((float)arr * percent);
 
-        __HAL_TIM_SET_COMPARE(timer, channel, ccr);
+        setCCR(ccr);
+    }
+
+    static void setCCR(uint32_t ccr)
+    {
+        // To replace following code
+        // __HAL_TIM_SET_COMPARE(timer, channel, ccr);
+
+        if constexpr (channel == TIM_CHANNEL_1)
+            timer->Instance->CCR1 = ccr;
+        if constexpr (channel == TIM_CHANNEL_2)
+            timer->Instance->CCR2 = ccr;
+        if constexpr (channel == TIM_CHANNEL_3)
+            timer->Instance->CCR3 = ccr;
+        if constexpr (channel == TIM_CHANNEL_4)
+            timer->Instance->CCR4 = ccr;
+        if constexpr (channel == TIM_CHANNEL_5)
+            timer->Instance->CCR5 = ccr;
+        if constexpr (channel == TIM_CHANNEL_6)
+            timer->Instance->CCR6 = ccr;
     }
 
     Stm32TimerPwmOutput() = delete;
